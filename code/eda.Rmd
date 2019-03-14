@@ -34,9 +34,10 @@ Load packages
 
 ```{r, warning= FALSE, message= FALSE }
 # Load libraries
-library(tidyverse)
-library(ggplot2)
-library(corrplot)
+library(tidyverse) # tidyverse syntax
+library(ggplot2) # Neat Graphs 
+library(kableExtra) # Pretty HTML Tables
+library(corrplot) # Pairwise correlation plot
 ```
 
 
@@ -70,7 +71,8 @@ video_games_data <- video_games_raw_data %>%
   select(-c(Rank, EU_Sales, JP_Sales, Other_Sales, Global_Sales)) %>%
   filter(Year %in% seq(2000, 2016, by = 1)) %>%
   mutate(Year = Year %>% droplevels()) %>%
-  filter(NA_Sales > 0.000)
+  filter(NA_Sales > 0.000) %>%
+  filter(!Publisher %in% c("NA", "N/A", "Unknown"))
 
 str(video_games_data)
 
@@ -92,6 +94,34 @@ Company A want to know the feasibility of an online game streaming platform simi
 + Which 3 top performing games should they include in their portfolio  
 + How should their portfolio split be in terms of game genres
 
+Functions
+==========
+
+```{r, warning= FALSE, message= FALSE }
+# Function to get the relevant grouped data frames
+# df -> dataframe
+# groupVariable -> the group by column 
+# output -> the resulting data frame
+getGroupedUnivariateData <- function(df, groupVariable) {
+  # group_by() store
+  # summarise() reduces variable to descriptive stat
+  # count is the new variable name, n() is a counting function
+  # percent is a new variable, sum() and nrow() are functions
+  # tot_sales_units -> total number of units sold per store
+  # tot_revenue -> total revenue per store
+  # order_by() tot_revenue and tot_sales_units
+  result <- df %>%             
+    group_by_(groupVariable) %>%     
+    summarise(count = n(),   
+              percent = (sum(count) / nrow(df)) * 100, 
+              tot_revenue = sum(NA_Sales),   
+              avg_revenue = (mean(NA_Sales))) %>%
+    arrange(desc(tot_revenue)) %>%
+    as.data.frame() 
+  
+  return(result)
+}
+```
 
 # I) Practical Analysis
 
@@ -99,6 +129,66 @@ Company A want to know the feasibility of an online game streaming platform simi
 ===========================================
 
 Categorical data - tabulation
+
+### Platform
+
+```{r, warning= FALSE, message= FALSE}
+# sales and revenue by store
+vg_platform <- getGroupedUnivariateData(video_games_data, "Platform")
+vg_platform %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "300px")
+```
+### Observations
+
++ Top 5 Platforms by Total Revenue are X360, PS2, Wii, PS3, DS  
++ Maximum number of games on PS2(1620) and DS(1512)
+
+### Year
+
+```{r, warning= FALSE, message= FALSE}
+# sales and revenue by store
+vg_platform <- getGroupedUnivariateData(video_games_data, "Year")
+vg_platform %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "300px")
+```
+### Observations
+
++ Top Years by Revenue are 2008, 2009, 2007 
++ Maximum number of games launched between 2007 to 2009
+
+### Genre
+
+```{r, warning= FALSE, message= FALSE}
+# sales and revenue by store
+vg_platform <- getGroupedUnivariateData(video_games_data, "Genre")
+vg_platform %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "300px")
+```
+### Observations
+
++ Top 6 Genres are Action, Sports, Shooter, Misc, Role-Playing, Racing
++ The top 6 Genres make revenue more than 70% of the total genres
+
+### Publisher 
+
+```{r, warning= FALSE, message= FALSE}
+# sales and revenue by store
+vg_platform <- getGroupedUnivariateData(video_games_data, "Publisher")
+vg_platform %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "300px")
+```
+### Observations
+
++ Top 5 Publishers are Electronic Arts, Nintendo, Activisions, Ubisoft, Take-Two Interactive   
++ Sony Computer Entertainment(406) and Konami Digital Entertainment(415) has more games but less Revenue than Nintendo and Take-Two Interactive
 
 
 2. Univariate graphical -- Categorical
