@@ -39,6 +39,7 @@ library(ggplot2) # Neat Graphs
 library(kableExtra) # Pretty HTML Tables
 library(corrplot) # Pairwise correlation plot
 library(gridExtra) # Arrange graphs in a grid
+library(janitor) # Pretty cross-tabs
 ```
 
 
@@ -64,17 +65,24 @@ summary(video_games_raw_data)
 ### Filter data based on our scope
 
 ```{r}
-# Years from 2000 onwards
+# Years from 2006 onwards
 # Remove Rank column
 # Consider only US Sales  
 # Remove rows with 0 sales
+# Pick top 200 games
 video_games_data <- video_games_raw_data %>%
   select(-c(Rank, EU_Sales, JP_Sales, Other_Sales, Global_Sales)) %>%
-  filter(Year %in% seq(2000, 2016, by = 1)) %>%
+  filter(Year %in% seq(2006, 2016, by = 1)) %>%
   mutate(Year = Year %>% droplevels()) %>%
   filter(NA_Sales > 0.000) %>%
-  filter(!Publisher %in% c("NA", "N/A", "Unknown"))
-
+  filter(!Publisher %in% c("NA", "N/A", "Unknown")) %>%
+  top_n(200, NA_Sales) %>%
+  mutate(Year = Year %>% droplevels()) %>%
+  mutate(Platform = Platform %>% droplevels()) %>%
+  mutate(Name = Name %>% droplevels()) %>%
+  mutate(Publisher = Publisher %>% droplevels()) %>%
+  mutate(Genre = Genre %>% droplevels())
+  
 str(video_games_data)
 
 summary(video_games_data)
@@ -169,8 +177,9 @@ vg_platform %>%
 ```
 ### Observations
 
-+ Top 5 Platforms by Total Revenue are X360, PS2, Wii, PS3, DS  
-+ Maximum number of games on PS2(1620) and DS(1512)
++ Top 5 Platforms by Total Revenue are X360, Wii, PS3, DS, XOne
++ Maximum number of games on X360(69) and PS3(37)  
++ X360, Wii and PS3 make up to 70% of the total games
 
 ### Year
 
@@ -184,8 +193,8 @@ vg_year %>%
 ```
 ### Observations
 
-+ Top Years by Revenue are 2008, 2009, 2007 
-+ Maximum number of games launched between 2007 to 2009
++ Top Years by Revenue are 2010, 2009, 2006
++ Maximum number of games launched between 2007 to 2011
 
 ### Genre
 
@@ -199,8 +208,8 @@ vg_genre %>%
 ```
 ### Observations
 
-+ Top 6 Genres are Action, Sports, Shooter, Misc, Role-Playing, Racing
-+ The top 6 Genres make revenue more than 70% of the total genres
++ Top 3 Genres are Shooter, Sports, Action
++ The top 3 Genres have more than 60% of the total games
 
 ### Publisher 
 
@@ -214,8 +223,9 @@ vg_publisher %>%
 ```
 ### Observations
 
-+ Top 5 Publishers are Electronic Arts, Nintendo, Activisions, Ubisoft, Take-Two Interactive   
-+ Sony Computer Entertainment(406) and Konami Digital Entertainment(415) has more games but less Revenue than Nintendo and Take-Two Interactive
++ Top 5 Publishers are Nintendo, Activision, Microsoft Game Studios, Electronic Arts, Take-Two Interactive   
++ Nintendo and Activision have highest total revenue  
++ Nintendo has maximum average revenue followed by Activision and Microsoft Game Studios
 
 
 2. Univariate graphical -- Categorical
@@ -233,11 +243,9 @@ getGroupedUnivariateHistograms(vg_platform, "Platform")
 ```
 ### Observations
 
-+ PS2 has maximum games  
++ X360 has maximum games  
 + X360 has maximum total revenue  
-+ GB has maximum average revenue but very few games. DC is also similar.  
-+ Among others, X360 has maximum revenue
-
++ Wii has maximum average revenue
 
 ### Year
 
@@ -247,11 +255,12 @@ getGroupedUnivariateHistograms(vg_platform, "Platform")
 getGroupedUnivariateHistograms(vg_year, "Year")
 
 ```
+
 ### Observations
 
-+ Most games were released between 2006 to 2011 with 2008 being maximum  
-+ Total Revenue is same pattern as number of games  
-+ Maximum average revenue was in 2013
++ Most games were released between 2006 to 2011 with 2010 being maximum  
++ Total Revenue is maximum in year 2010
++ Maximum average revenue was in 2006
 
 
 ### Genre
@@ -264,9 +273,9 @@ getGroupedUnivariateHistograms(vg_genre, "Genre")
 ```
 ### Observations
 
-+ Action Genre has the most number of games  
-+ Action Genre has maximum total revenue   
-+ Shooting Genre has maximum average revenue
++ Action & Shooter Genre have the most number of games  
++ Shooter Genre has maximum total revenue   
++ Racing Genre has maximum average revenue
 
 
 ### Publisher
@@ -274,18 +283,13 @@ getGroupedUnivariateHistograms(vg_genre, "Genre")
 ```{r, warning= FALSE, message= FALSE }
 
 # Revenue by Publisher
-# Remove publishers who have less than 100 games
-vg_publisher <- vg_publisher %>%
-  filter(count >= 100)
-
 getGroupedUnivariateHistograms(vg_publisher, "Publisher")
 
 ```
 ### Observations
 
-+ Electronic Arts has most number of games  
-+ Electronic Arts, Nintendo and Activision have most total revenue  
-+ Nintendo has most average revenue followed by Microsoft
++ Nintendo followed by Activision in total games and revenue  
++ Nintendo followed by Microsoft Game Studios in average revenue
 
 
 3. Univariate non-graphical -- Quantitative
@@ -302,8 +306,8 @@ summary(video_games_data)
 
 ### Observations
 
-+ Mean NA_Sales Revenue is 0.33 Millions  
-+ Median NA_Sales is 0.13  
++ Mean NA_Sales Revenue is 3.8 Millions  
++ Median NA_Sales is 2.65 Millions  
 + Therefore, the distribution is left skewed  
 + Maximum NA_Sales in 41.49 Million
 
@@ -326,7 +330,7 @@ video_games_data %>%
 ```
 ### Observations
 
-+ Most NA_Sales between 0 to 5 Million Dollars  
++ Most NA_Sales between 2 to 10 Million Dollars  
 + Few outliers around 40 Million Dollars
 
 Boxplots
@@ -344,9 +348,114 @@ boxplot(video_games_data$NA_Sales, main = "NA_Sales(Millions")
 
 Cross-Tabs
 
+```{r, warning= FALSE, message= FALSE }
+
+# Make cross-tabs between two categorical variables using janitor package
+video_games_data %>% 
+  tabyl(Platform, Publisher) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))# %>%
+  #scroll_box(height = "300px")
+
+```
+
+### Observations
+
++ Nintendo has most games for their own platform DS and few games for Wii  
++ Activision and Electronic Arts create games for all platforms  
+
+```{r, warning= FALSE, message= FALSE }
+
+video_games_data %>% 
+  tabyl(Publisher, Genre) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) #%>%
+  #scroll_box(height = "300px")
+```
+
+### Observations
+
++ Activision has the most shooter games (22)  
++ Take-Two Interactive and Ubisoft have the most action games (9)  
++ Electronic Arts have the most Sports games (16)  
+
+
+```{r, warning= FALSE, message= FALSE }
+
+video_games_data %>% 
+  tabyl(Genre, Platform) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) #%>%
+  #scroll_box(height = "300px")
+```
+
+### Observations
+
++ X360 has the most shooter games (22)  
++ X360 and PS3 have the most action games (16, 15)  
++ X360 has the most Sports games (11)  
 
 Proportion Cross-Tabs
 
+
+```{r, warning= FALSE, message= FALSE }
+
+# Make cross-tabs between two categorical variables using janitor package
+video_games_data %>% 
+  tabyl(Platform, Publisher) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting() %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))# %>%
+  #scroll_box(height = "300px")
+
+```
+
+### Observations
+
++ Nintendo has most games for their own platform DS and few games for Wii  
++ Activision and Electronic Arts create games for all platforms  
+
+```{r, warning= FALSE, message= FALSE }
+
+video_games_data %>% 
+  tabyl(Publisher, Genre) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting() %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) #%>%
+  #scroll_box(height = "300px")
+```
+
+### Observations
+
++ Activision has the most shooter games (22)  
++ Take-Two Interactive and Ubisoft have the most action games (9)  
++ Electronic Arts have the most Sports games (16)  
+
+
+```{r, warning= FALSE, message= FALSE }
+
+video_games_data %>% 
+  tabyl(Genre, Platform) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting() %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) #%>%
+  #scroll_box(height = "300px")
+```
+
+### Observations
+
++ X360 has the most shooter games (22)  
++ X360 and PS3 have the most action games (16, 15)  
++ X360 has the most Sports games (11)  
 
 6. Multivariate graphical code -- Categorical
 ==============================================
