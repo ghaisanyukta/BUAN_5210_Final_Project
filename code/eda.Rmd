@@ -293,6 +293,19 @@ getGroupedUnivariateHistograms(vg_publisher, "Publisher")
 
 Descriptive Statistics
 
+```{r, warning=FALSE, message=FALSE}
+
+# Get descriptive stats 
+summary(video_games_data)
+
+```
+
+### Observations
+
++ Mean NA_Sales Revenue is 0.33 Millions  
++ Median NA_Sales is 0.13  
++ Therefore, the distribution is left skewed
+
 
 4. Univariate graphical -- Quantitative
 =========================================
