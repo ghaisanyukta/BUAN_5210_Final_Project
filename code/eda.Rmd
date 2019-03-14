@@ -42,16 +42,55 @@ library(corrplot)
 
 Load data
 =========================================
+This dataset contains a list of video games with sales greater than 100,000 copies and is obtained from kaggle.com. It represents video games sales from a website vgchartz.com from 1980 to 2016.
 
 ```{r}
+#Load Data
+video_games_raw_data <- read.csv("../raw_data/vgsales.csv")
+
+str(video_games_raw_data)
+
+summary(video_games_raw_data)
 
 ```
+### Observations
+
++ Table contains 16598 observations of 11 variables  
++ 5 factor variables - Name, Platform, Year, Genre, Publisher  
++ 6 numeric variables - Rank, NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales
+
+### Filter data based on our scope
+
+```{r}
+# Years from 2000 onwards
+# Remove Rank column
+# Consider only US Sales  
+# Remove rows with 0 sales
+video_games_data <- video_games_raw_data %>%
+  select(-c(Rank, EU_Sales, JP_Sales, Other_Sales, Global_Sales)) %>%
+  filter(Year %in% seq(2000, 2016, by = 1)) %>%
+  mutate(Year = Year %>% droplevels()) %>%
+  filter(NA_Sales > 0.000)
+
+str(video_games_data)
+
+summary(video_games_data)
+
+```
+
+### Observations
+
++ 5 factor variables - Name, Platform, Year, Genre, Publisher  
++ 1 numeric variable - NA_Sales
 
 
 Questions to be answered
 ========================
+Company A want to know the feasibility of an online game streaming platform similar to ‘Netflix’ for games. They would like to know how to design their initial portfolio on the platform to generate maximum revenue.  
 
-
++ Should Company A tie up with a single publisher or platform?  
++ Which 3 top performing games should they include in their portfolio  
++ How should their portfolio split be in terms of game genres
 
 
 # I) Practical Analysis
