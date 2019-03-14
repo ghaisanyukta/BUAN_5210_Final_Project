@@ -38,6 +38,7 @@ library(tidyverse) # tidyverse syntax
 library(ggplot2) # Neat Graphs 
 library(kableExtra) # Pretty HTML Tables
 library(corrplot) # Pairwise correlation plot
+library(gridExtra) # Arrange graphs in a grid
 ```
 
 
@@ -121,6 +122,32 @@ getGroupedUnivariateData <- function(df, groupVariable) {
   
   return(result)
 }
+
+# Function to draw histograms using grid.arrange so can see all quant variables together group by variable x
+# df -> dataframe
+# x -> the group by column 
+getGroupedUnivariateHistograms <- function(df, x, flip = TRUE) {
+  grid.arrange(
+    df %>% 
+      ggplot(aes(x = get(x), y = count)) +  
+        geom_bar(stat = "identity") + 
+        {if(flip)coord_flip()} +
+        xlab(x),
+    df %>% 
+      ggplot(aes(x = get(x), y = tot_revenue)) +
+        geom_bar(stat = "identity") + 
+        {if(flip)coord_flip()} +
+        xlab(x),
+    df %>% 
+      ggplot(aes(x = get(x), y = avg_revenue)) +
+        geom_bar(stat = "identity") + 
+        {if(flip)coord_flip()} +
+        xlab(x),
+    ncol = 2
+  )
+}
+
+
 ```
 
 # I) Practical Analysis
@@ -133,7 +160,7 @@ Categorical data - tabulation
 ### Platform
 
 ```{r, warning= FALSE, message= FALSE}
-# sales and revenue by store
+# Count and revenue by Platform
 vg_platform <- getGroupedUnivariateData(video_games_data, "Platform")
 vg_platform %>%
   kable() %>%
@@ -148,9 +175,9 @@ vg_platform %>%
 ### Year
 
 ```{r, warning= FALSE, message= FALSE}
-# sales and revenue by store
-vg_platform <- getGroupedUnivariateData(video_games_data, "Year")
-vg_platform %>%
+# Count and revenue by Year
+vg_year <- getGroupedUnivariateData(video_games_data, "Year")
+vg_year %>%
   kable() %>%
   kable_styling(bootstrap_options = c("striped", "hover")) %>%
   scroll_box(height = "300px")
@@ -163,9 +190,9 @@ vg_platform %>%
 ### Genre
 
 ```{r, warning= FALSE, message= FALSE}
-# sales and revenue by store
-vg_platform <- getGroupedUnivariateData(video_games_data, "Genre")
-vg_platform %>%
+# Count and revenue by Genre
+vg_genre <- getGroupedUnivariateData(video_games_data, "Genre")
+vg_genre %>%
   kable() %>%
   kable_styling(bootstrap_options = c("striped", "hover")) %>%
   scroll_box(height = "300px")
@@ -178,9 +205,9 @@ vg_platform %>%
 ### Publisher 
 
 ```{r, warning= FALSE, message= FALSE}
-# sales and revenue by store
-vg_platform <- getGroupedUnivariateData(video_games_data, "Publisher")
-vg_platform %>%
+# Count and revenue by Publisher
+vg_publisher <- getGroupedUnivariateData(video_games_data, "Publisher")
+vg_publisher %>%
   kable() %>%
   kable_styling(bootstrap_options = c("striped", "hover")) %>%
   scroll_box(height = "300px")
@@ -195,6 +222,70 @@ vg_platform %>%
 ===========================================
 
 Histograms
+
+### Platform
+
+```{r, warning= FALSE, message= FALSE }
+
+# Revenue by Platform
+getGroupedUnivariateHistograms(vg_platform, "Platform")
+
+```
+### Observations
+
++ PS2 has maximum games  
++ X360 has maximum total revenue  
++ GB has maximum average revenue but very few games. DC is also similar.  
++ Among others, X360 has maximum revenue
+
+
+### Year
+
+```{r, warning= FALSE, message= FALSE }
+
+# Revenue by Year
+getGroupedUnivariateHistograms(vg_year, "Year")
+
+```
+### Observations
+
++ Most games were released between 2006 to 2011 with 2008 being maximum  
++ Total Revenue is same pattern as number of games  
++ Maximum average revenue was in 2013
+
+
+### Genre
+
+```{r, warning= FALSE, message= FALSE }
+
+# Revenue by Genre
+getGroupedUnivariateHistograms(vg_genre, "Genre")
+
+```
+### Observations
+
++ Action Genre has the most number of games  
++ Action Genre has maximum total revenue   
++ Shooting Genre has maximum average revenue
+
+
+### Publisher
+
+```{r, warning= FALSE, message= FALSE }
+
+# Revenue by Publisher
+# Remove publishers who have less than 100 games
+vg_publisher <- vg_publisher %>%
+  filter(count >= 100)
+
+getGroupedUnivariateHistograms(vg_publisher, "Publisher")
+
+```
+### Observations
+
++ Electronic Arts has most number of games  
++ Electronic Arts, Nintendo and Activision have most total revenue  
++ Nintendo has most average revenue followed by Microsoft
 
 
 3. Univariate non-graphical -- Quantitative
