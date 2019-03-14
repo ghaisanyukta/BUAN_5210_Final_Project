@@ -1,0 +1,157 @@
+---
+title: "Final Project"
+author: "Sanyukta Ghai"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true    
+    toc_depth: 2    
+    toc_float: TRUE
+---
+
+```{r echo = FALSE}
+# Course: BUAN 5210
+# Title: Quick Project 1 Technical Appendix
+# Purpose: Analyzing office sales data 
+# Date: Jan 26, 2019
+# Author: Nancy Jain and Sanyukta Ghai
+```
+
+
+Clear environment
+=================
+
+```{r, warning= FALSE, message= FALSE}
+# Clear environment of variables and functions
+rm(list = ls(all = TRUE)) 
+# Clear environmet of packages
+if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sessionInfo()$otherPkgs), sep=""), detach, character.only = TRUE, unload = TRUE)
+```
+
+
+Load packages 
+==============
+
+```{r, warning= FALSE, message= FALSE }
+# Load libraries
+library(tidyverse)
+library(ggplot2)
+library(corrplot)
+```
+
+
+Load data
+=========================================
+
+```{r}
+
+```
+
+
+Questions to be answered
+========================
+
+
+
+
+# I) Practical Analysis
+
+1. Univariate non-graphical -- Categorical
+===========================================
+
+Categorical data - tabulation
+
+
+2. Univariate graphical -- Categorical
+===========================================
+
+Histograms
+
+
+3. Univariate non-graphical -- Quantitative
+============================================
+
+Descriptive Statistics
+
+
+4. Univariate graphical -- Quantitative
+=========================================
+
+Histograms
+
+
+Boxplots
+
+
+5. Multivariate non-graphical -- Categorical
+============================================
+
+Cross-Tabs
+
+
+Proportion Cross-Tabs
+
+
+6. Multivariate graphical code -- Categorical
+==============================================
+
+Grouped Summary graphs with more than 1 Categorical variables
+
+
+
+7. Multivariate non-graphical -- Quantitative
+==============================================
+
+Correlation plots
+
+
+8. Multivariate graphical code -- Quantitative
+===============================================
+
+Pairwise Plot
+
+
+
+9. Multivariate non-graphical -- Categorical and Quantitative
+=============================================================
+
+matrix tables
+
+
+10. Multivariate graphical -- Categorical and Quantitative
+=============================================================
+
+matrix group by and summarize quant graphs
+
+
+# II) Statistical Analysis
+
+
+Questions for statistical analysis
+=========================================
+
+
+
+Multiple Linear regression
+================================
+
+Summary
+=======
+
+
+Save Image of file
+===================
+
+```{r, warning= FALSE, message= FALSE }
+
+# Save the rds file to reuse anything from this file in another file
+save.image("TA.RData")
+# recover using load()
+# load("TA.RData")
+
+```
+
+
+
+
+
