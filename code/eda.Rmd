@@ -304,7 +304,8 @@ summary(video_games_data)
 
 + Mean NA_Sales Revenue is 0.33 Millions  
 + Median NA_Sales is 0.13  
-+ Therefore, the distribution is left skewed
++ Therefore, the distribution is left skewed  
++ Maximum NA_Sales in 41.49 Million
 
 
 4. Univariate graphical -- Quantitative
@@ -312,9 +313,31 @@ summary(video_games_data)
 
 Histograms
 
+```{r, warning=FALSE, message=FALSE}
+# Code histograms using ggplot() 
+video_games_data %>% 
+  ggplot(aes(NA_Sales)) +
+  geom_histogram()
+
+video_games_data %>% 
+  ggplot(aes(NA_Sales)) +
+  geom_histogram() +
+  xlim(0,15)
+```
+### Observations
+
++ Most NA_Sales between 0 to 5 Million Dollars  
++ Few outliers around 40 Million Dollars
 
 Boxplots
 
+```{r, warning=FALSE, message=FALSE}
+# Code boxplot
+boxplot(video_games_data$NA_Sales, main = "NA_Sales(Millions")
+
+```
+
+### Observations same as histograms
 
 5. Multivariate non-graphical -- Categorical
 ============================================
