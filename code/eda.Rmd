@@ -38,6 +38,7 @@ library(tidyverse) # tidyverse syntax
 library(ggplot2) # Neat Graphs 
 library(kableExtra) # Pretty HTML Tables
 library(corrplot) # Pairwise correlation plot
+library(GGally)  # For ggpairs, a detailed correlation graphic
 library(gridExtra) # Arrange graphs in a grid
 library(janitor) # Pretty cross-tabs
 ```
@@ -60,7 +61,7 @@ summary(video_games_raw_data)
 
 + Table contains 16598 observations of 11 variables  
 + 5 factor variables - Name, Platform, Year, Genre, Publisher  
-+ 6 numeric variables - Rank, NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales
++ 6 numeric variables - Rank, NA_Sales, EU_Sales, JP_Sales, Other_Sales
 
 ### Filter data based on our scope
 
@@ -71,7 +72,7 @@ summary(video_games_raw_data)
 # Remove rows with 0 sales
 # Pick top 200 games
 video_games_data <- video_games_raw_data %>%
-  select(-c(Rank, EU_Sales, JP_Sales, Other_Sales, Global_Sales)) %>%
+  select(-c(Rank, EU_Sales, JP_Sales, Other_Sales)) %>%
   filter(Year %in% seq(2006, 2016, by = 1)) %>%
   mutate(Year = Year %>% droplevels()) %>%
   filter(NA_Sales > 0.000) %>%
@@ -155,6 +156,21 @@ getGroupedUnivariateHistograms <- function(df, x, flip = TRUE) {
   )
 }
 
+# Function to draw multivariate graphs
+# df -> dataframe
+# groupVariable1, groupVariable2 -> the group by columns
+# output -> no output -> draws the required graph
+getMultivariateGraphical <- function(df, groupVariable1, groupVariable2, flipLabel){
+  df %>%
+    group_by_(groupVariable1, groupVariable2) %>% 
+    summarise(count = n()) %>% 
+    ggplot(aes(get(groupVariable1), get(groupVariable2))) + 
+    coord_flip() +
+    geom_tile(aes(fill = -count)) +
+    xlab(groupVariable1) +
+    ylab(groupVariable2) +
+    {if(flipLabel)theme(axis.text.x = element_text(angle = 45))} 
+}
 
 ```
 
@@ -241,6 +257,7 @@ Histograms
 getGroupedUnivariateHistograms(vg_platform, "Platform")
 
 ```
+
 ### Observations
 
 + X360 has maximum games  
@@ -286,6 +303,7 @@ getGroupedUnivariateHistograms(vg_genre, "Genre")
 getGroupedUnivariateHistograms(vg_publisher, "Publisher")
 
 ```
+
 ### Observations
 
 + Nintendo followed by Activision in total games and revenue  
@@ -309,7 +327,9 @@ summary(video_games_data)
 + Mean NA_Sales Revenue is 3.8 Millions  
 + Median NA_Sales is 2.65 Millions  
 + Therefore, the distribution is left skewed  
-+ Maximum NA_Sales in 41.49 Million
++ Maximum NA_Sales in 41.49 Million  
++ Global_Sales ranges from 2 Million to 82 Million  
++ Mean Global_Sales is 7.3 Million. Median is 5.05 Million. So, left skewed.
 
 
 4. Univariate graphical -- Quantitative
@@ -328,10 +348,26 @@ video_games_data %>%
   geom_histogram() +
   xlim(0,15)
 ```
+
 ### Observations
 
 + Most NA_Sales between 2 to 10 Million Dollars  
 + Few outliers around 40 Million Dollars
+
+```{r}
+# Code histograms using ggplot() 
+video_games_data %>% 
+  ggplot(aes(Global_Sales)) +
+  geom_histogram()
+
+```
+
+### Observations
+
++ Most Global_Sales between 2 to 40 Million Dollars  
++ Few outliers around 82 Million Dollars
+
+
 
 Boxplots
 
@@ -342,6 +378,17 @@ boxplot(video_games_data$NA_Sales, main = "NA_Sales(Millions")
 ```
 
 ### Observations same as histograms
+
+```{r}
+# Code boxplot
+boxplot(video_games_data$Global_Sales, main = "Global_Sales(Millions")
+
+```
+
+### Observations
+
++ Most Global_Sales between 2 to 15 Million Dollars  
++ Few outliers from 15 to 82 Million Dollars
 
 5. Multivariate non-graphical -- Categorical
 ============================================
@@ -365,6 +412,7 @@ video_games_data %>%
 + Nintendo has most games for their own platform DS and few games for Wii  
 + Activision and Electronic Arts create games for all platforms  
 
+
 ```{r, warning= FALSE, message= FALSE }
 
 video_games_data %>% 
@@ -379,8 +427,7 @@ video_games_data %>%
 
 + Activision has the most shooter games (22)  
 + Take-Two Interactive and Ubisoft have the most action games (9)  
-+ Electronic Arts have the most Sports games (16)  
-
++ Electronic Arts have the most Sports games (16) 
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -397,6 +444,7 @@ video_games_data %>%
 + X360 has the most shooter games (22)  
 + X360 and PS3 have the most action games (16, 15)  
 + X360 has the most Sports games (11)  
+
 
 Proportion Cross-Tabs
 
@@ -417,8 +465,10 @@ video_games_data %>%
 
 ### Observations
 
-+ Nintendo has most games for their own platform DS and few games for Wii  
-+ Activision and Electronic Arts create games for all platforms  
++ Activision in the only Publisher for PC  
++ Sony Computer Entertainment is the only publisher for PSP  
++ Nintendo is the only publisher for WiiU
+
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -434,10 +484,11 @@ video_games_data %>%
 
 ### Observations
 
-+ Activision has the most shooter games (22)  
-+ Take-Two Interactive and Ubisoft have the most action games (9)  
-+ Electronic Arts have the most Sports games (16)  
-
++ Eidos Interactive, Konami Digital Entertainment, LucasArts, Sony Computer Entertainment Europe, THQ only develop for Action Genre  
++ Mindscape, MTV Games, RedOctane only develop for Misc genre  
++ Bethesda Softworks only develops role-playing genre  
++ Shooter and Action genre have maximum games (22% each)
+ 
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -453,9 +504,9 @@ video_games_data %>%
 
 ### Observations
 
-+ X360 has the most shooter games (22)  
-+ X360 and PS3 have the most action games (16, 15)  
-+ X360 has the most Sports games (11)  
++ Strategy games are only played on PC  
++ X360 has a good spread (34.5%) across genres except Platform, Stimulation and Strategy  
++ X360 has maximum share of Shooter, Racing, Sports and Action. X360 is followed by PS3 in the same categories.
 
 6. Multivariate graphical code -- Categorical
 ==============================================
@@ -463,11 +514,70 @@ video_games_data %>%
 Grouped Summary graphs with more than 1 Categorical variables
 
 
+```{r, warning= FALSE, message= FALSE }
+
+getMultivariateGraphical(video_games_data, "Publisher", "Platform", FALSE)
+
+```
+
+### Observations
+
++ Most publishers developing games for PS3 and X360 Platforms  
++ Microsoft Game Studios develops exclusively for X360 and XOne  
++ Sony Computer Entertainment develops exclusively for PS2, PS3, PS4 and PSP  
++ Nintendo develops exclusively for 3DS, DS, Wii and WiiU  
++ Activision, Electronic Arts develop for almost all platforms  
++ Most others develop for PS and X360 platforms  
++ Need to add more information on platform owners
+
+
+```{r, warning= FALSE, message= FALSE }
+
+getMultivariateGraphical(video_games_data, "Publisher", "Genre", TRUE)
+
+```
+
+### Observations
+
++ Activision, Microsoft Game Studios and Electronic Arts leading in Shooter games 
++ Ubisoft, Take-Two Interactive and Sony Computer Entertainment leading in Action games  
++ Nintendo publishes games across the board except Strategy and Adventure
+
+
+```{r, warning= FALSE, message= FALSE }
+
+getMultivariateGraphical(video_games_data, "Genre", "Platform", FALSE)
+
+```
+
+### Observations
+
++ Shooter more than Action games on X360 followed by Role-playing and Sports  
++ Action more than Shooter on PS3 followed by Sports
++ Simulation only on 3DS, DS and Wii platforms
+
 
 7. Multivariate non-graphical -- Quantitative
 ==============================================
 
 Correlation plots
+
+```{r, warning= FALSE, message= FALSE }
+
+# Find correlation of quantitative variables
+cor_plot <- video_games_data %>%
+  mutate(Year = as.numeric(Year)) %>%
+  select(NA_Sales, Global_Sales, Year)
+cor(cor_plot) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped","hover"))
+
+```
+
+### Observations
+
++ NA_Sales and Global_Sales have 96.6% correlation. That means, Global gaming pattern is almost same as North America.  
++ Year is negatively correlated with both sales showing slow down in game sales.
 
 
 8. Multivariate graphical code -- Quantitative
@@ -475,12 +585,56 @@ Correlation plots
 
 Pairwise Plot
 
+```{r}
+# Correlation plot
+pairs_plot <- video_games_data %>%
+  mutate(Year = as.numeric(Year)) %>%
+  select(NA_Sales, Global_Sales, Year)
+pairs_plot %>%
+  ggpairs()
+```
 
+### Observations
+
++ NA_Sales and Global_Sales have high positive correlation 0.966  
++ Correlation between Year and NA_Sales is -0.159 and Year and Global_Sales is -0.139. That means North America gaming slowing down faster than Global.
 
 9. Multivariate non-graphical -- Categorical and Quantitative
 =============================================================
 
 matrix tables
+
+```{r, warning= FALSE, message= FALSE }
+video_games_data %>%
+  group_by(Genre, Platform) %>%
+  summarise(total_revenue = sum(NA_Sales)) %>%
+  spread(Platform, total_revenue) %>%
+  kable() %>%
+  kable_styling()
+```
+
+### Observations
+
++ Shooter games on X360 (111.65) are the highest revenue earners. Action also highest on X360 (50.73) 
++ Least revenue on PSP (Platform 2.65) followed by PC (Role-playing 5 and Strategy 2.56)  
++ Adventure, Simulation, Strategy genres have least total revenues
+
+
+```{r, warning= FALSE, message= FALSE }
+video_games_data %>%
+  group_by(Genre, Publisher) %>%
+  summarise(total_revenue = sum(NA_Sales)) %>%
+  spread(Genre, total_revenue) %>%
+  kable() %>%
+  kable_styling()
+```
+
+### Observations
+
++ Activision (109.84) has highest total revenues for Shooter games  
++ Take-Two Interactive (42.95) for Action genre  
++ Microsoft Game Studios highest revenue is from Shooter games (44.62)  
++ Nintendo's revenue is spread out in almost all genres. Highest in sports genre (75.27)  
 
 
 10. Multivariate graphical -- Categorical and Quantitative
@@ -488,20 +642,92 @@ matrix tables
 
 matrix group by and summarize quant graphs
 
+```{r, warning= FALSE, message= FALSE }
+# get total revenue by platform
+video_games_data %>%
+  group_by(Platform, Genre) %>%
+  summarize (Revenue_sum = sum(NA_Sales)) %>%
+  ggplot(aes(x = reorder(Platform, -Revenue_sum), y = Revenue_sum, fill = Genre)) +
+  geom_bar(stat="identity", position="dodge") +
+  coord_flip() +
+  theme_classic() + 
+  theme(axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.y = element_blank())
 
+```
+
+
+```{r, warning= FALSE, message= FALSE }
+# get total revenue by platform
+video_games_data %>%
+  group_by(Platform, Genre) %>%
+  summarize (Revenue_sum = sum(NA_Sales)) %>%
+  filter(Revenue_sum >= 10.0) %>%
+  ggplot(aes(x = reorder(Platform, -Revenue_sum), y = Revenue_sum, fill = Genre)) +
+  geom_bar(stat="identity", position="dodge") +
+  ggtitle("Platforms more than 10 Million total revenue", subtitle = "X360 has highest revenue and \nthe most genres above 10 Million") +
+  coord_flip() +
+  theme_classic() + 
+  theme(axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+```
+
+
+
+```{r, warning= FALSE, message= FALSE }
+# get total revenue by platform
+video_games_data %>%
+  group_by(Publisher, Genre) %>%
+  summarize (Revenue_sum = sum(NA_Sales)) %>%
+  ggplot(aes(x = reorder(Publisher, -Revenue_sum), y = Revenue_sum, fill = Genre)) +
+  geom_bar(stat="identity", position="dodge") +
+  coord_flip() +
+  theme_classic() + 
+  theme(axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+```
+
+
+```{r, warning= FALSE, message= FALSE }
+# get total revenue by platform
+video_games_data %>%
+  group_by(Publisher, Genre) %>%
+  summarize (Revenue_sum = sum(NA_Sales)) %>%
+  filter(Revenue_sum >= 10.0) %>%
+  ggplot(aes(x = reorder(Publisher, -Revenue_sum), y = Revenue_sum, fill = Genre)) +
+  geom_bar(stat="identity", position="dodge") +
+  ggtitle("Publishers above 10 Million in Revenue", subtitle = "Nintendo has most genres above 10 Million") +
+  coord_flip() +
+  theme_classic() + 
+  theme(axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+```
+
+
+
+```{r, include=FALSE}
 # II) Statistical Analysis
 
 
-Questions for statistical analysis
-=========================================
+#Questions for statistical analysis
+#=========================================
 
 
 
-Multiple Linear regression
-================================
+#Multiple Linear regression
+#================================
 
-Summary
-=======
+#Summary
+#=======
+```
+
 
 
 Save Image of file
