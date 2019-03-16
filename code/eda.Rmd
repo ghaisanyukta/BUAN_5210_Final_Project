@@ -63,6 +63,30 @@ summary(video_games_raw_data)
 + 5 factor variables - Name, Platform, Year, Genre, Publisher  
 + 6 numeric variables - Rank, NA_Sales, EU_Sales, JP_Sales, Other_Sales
 
+### Create a Platform and Owner dataframe 
+
+```{r}
+
+platform_owner <- tribble(
+  ~Platform, ~Owner, 
+  "X360", "Microsoft",
+  "XOne", "Microsoft",
+  "PC", "Microsoft",
+  "Wii", "Nintendo",
+  "WiiU", "Nintendo",
+  "DS", "Nintendo",
+  "3DS", "Nintendo",
+  "PSP", "Sony",
+  "PS2", "Sony",
+  "PS3", "Sony",
+  "PS4", "Sony"
+) %>%
+  as.data.frame()
+
+
+```
+
+
 ### Filter data based on our scope
 
 ```{r}
@@ -71,6 +95,7 @@ summary(video_games_raw_data)
 # Consider only US Sales  
 # Remove rows with 0 sales
 # Pick top 200 games
+# Drop unused levels
 video_games_data <- video_games_raw_data %>%
   select(-c(Rank, EU_Sales, JP_Sales, Other_Sales)) %>%
   filter(Year %in% seq(2006, 2016, by = 1)) %>%
@@ -83,6 +108,11 @@ video_games_data <- video_games_raw_data %>%
   mutate(Name = Name %>% droplevels()) %>%
   mutate(Publisher = Publisher %>% droplevels()) %>%
   mutate(Genre = Genre %>% droplevels())
+
+video_games_data <- video_games_data %>%
+  left_join(platform_owner) %>%
+  mutate(Platform = as.factor(Platform),
+         Owner = as.factor(Owner))
   
 str(video_games_data)
 
@@ -92,8 +122,8 @@ summary(video_games_data)
 
 ### Observations
 
-+ 5 factor variables - Name, Platform, Year, Genre, Publisher  
-+ 1 numeric variable - NA_Sales
++ 5 factor variables - Name, Platform, Year, Genre, Publisher, Owner  
++ 2 numeric variable - NA_Sales, Global_Sales
 
 
 Questions to be answered
@@ -103,6 +133,14 @@ Company A want to know the feasibility of an online game streaming platform simi
 + Should Company A tie up with a single publisher or platform?  
 + Which 3 top performing games should they include in their portfolio  
 + How should their portfolio split be in terms of game genres
+
+Assumptions
+========================
+
++ Increasing revenue is the main idea  
++ No data based on gender and genres/platforms  
++ Can include games across platforms  
++ Not competing with mobile games
 
 Functions
 ==========
@@ -243,6 +281,21 @@ vg_publisher %>%
 + Nintendo and Activision have highest total revenue  
 + Nintendo has maximum average revenue followed by Activision and Microsoft Game Studios
 
+### Owner 
+
+```{r, warning= FALSE, message= FALSE}
+# Count and revenue by Publisher
+vg_owner <- getGroupedUnivariateData(video_games_data, "Owner")
+vg_owner %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "300px")
+```
+### Observations
+
++ Even though Microsoft has more games (43%), total revenue ($302 Million) and average revenue per game ($5.04 Million) highest for Nintendo  
++ Least games (27%) and least average revenue per game ($2.92 Million per game) for Sony
+
 
 2. Univariate graphical -- Categorical
 ===========================================
@@ -309,6 +362,21 @@ getGroupedUnivariateHistograms(vg_publisher, "Publisher")
 + Nintendo followed by Activision in total games and revenue  
 + Nintendo followed by Microsoft Game Studios in average revenue
 
+### Owner
+
+```{r, warning= FALSE, message= FALSE }
+
+# Revenue by Owner
+getGroupedUnivariateHistograms(vg_publisher, "Owner")
+
+```
+
+### Observations
+
++ Microsoft has most games across platforms  
++ Microsoft and Nintendo have highest total revenues  
++ Nintendo has highest average revenue per game
+
 
 3. Univariate non-graphical -- Quantitative
 ============================================
@@ -337,6 +405,8 @@ summary(video_games_data)
 
 Histograms
 
+### NA_Sales
+
 ```{r, warning=FALSE, message=FALSE}
 # Code histograms using ggplot() 
 video_games_data %>% 
@@ -354,6 +424,8 @@ video_games_data %>%
 + Most NA_Sales between 2 to 10 Million Dollars  
 + Few outliers around 40 Million Dollars
 
+### Global_Sales
+
 ```{r}
 # Code histograms using ggplot() 
 video_games_data %>% 
@@ -364,20 +436,29 @@ video_games_data %>%
 
 ### Observations
 
-+ Most Global_Sales between 2 to 40 Million Dollars  
++ Most Global_Sales between 2 to 5 Million Dollars  
 + Few outliers around 82 Million Dollars
 
 
 
 Boxplots
 
+### NA_Sales
+
 ```{r, warning=FALSE, message=FALSE}
 # Code boxplot
 boxplot(video_games_data$NA_Sales, main = "NA_Sales(Millions")
 
+sales_wo_outliers <- video_games_data %>%
+  filter(NA_Sales <= 5)
+boxplot(sales_wo_outliers$NA_Sales, main = "NA_Sales(Millions")
+
 ```
 
 ### Observations same as histograms
+
+
+### Global_Sales
 
 ```{r}
 # Code boxplot
@@ -394,6 +475,8 @@ boxplot(video_games_data$Global_Sales, main = "Global_Sales(Millions")
 ============================================
 
 Cross-Tabs
+
+### Platform - Publisher
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -412,6 +495,7 @@ video_games_data %>%
 + Nintendo has most games for their own platform DS and few games for Wii  
 + Activision and Electronic Arts create games for all platforms  
 
+### Publisher - Genre
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -429,6 +513,8 @@ video_games_data %>%
 + Take-Two Interactive and Ubisoft have the most action games (9)  
 + Electronic Arts have the most Sports games (16) 
 
+### Genre - Platform
+
 ```{r, warning= FALSE, message= FALSE }
 
 video_games_data %>% 
@@ -445,9 +531,27 @@ video_games_data %>%
 + X360 and PS3 have the most action games (16, 15)  
 + X360 has the most Sports games (11)  
 
+### Publisher - Owner
+
+```{r, warning= FALSE, message= FALSE }
+
+video_games_data %>% 
+  tabyl(Publisher, Owner) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) #%>%
+  #scroll_box(height = "300px")
+```
+
+### Observations
+
++ Activision, Electronic Arts, Take-Two Interactive, Ubisoft publish games for all 3 owners  
++ Some others for Sony and Microsoft  
++ Some exclusive for each
 
 Proportion Cross-Tabs
 
+### Platform - Publisher
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -469,6 +573,7 @@ video_games_data %>%
 + Sony Computer Entertainment is the only publisher for PSP  
 + Nintendo is the only publisher for WiiU
 
+### Publisher - Genre
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -489,6 +594,7 @@ video_games_data %>%
 + Bethesda Softworks only develops role-playing genre  
 + Shooter and Action genre have maximum games (22% each)
  
+### Genre - Platform
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -508,11 +614,30 @@ video_games_data %>%
 + X360 has a good spread (34.5%) across genres except Platform, Stimulation and Strategy  
 + X360 has maximum share of Shooter, Racing, Sports and Action. X360 is followed by PS3 in the same categories.
 
+### Publisher - Owner
+
+```{r, warning= FALSE, message= FALSE }
+
+video_games_data %>% 
+  tabyl(Publisher, Owner) %>% 
+  adorn_totals(where = c("row", "col")) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting() %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) #%>%
+  #scroll_box(height = "300px")
+```
+
+### Observations
+
++ Publishers that develop for all three have more games on Microsoft followed by Sony and Nintendo
+
 6. Multivariate graphical code -- Categorical
 ==============================================
 
 Grouped Summary graphs with more than 1 Categorical variables
 
+### Publisher - Platform
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -530,6 +655,7 @@ getMultivariateGraphical(video_games_data, "Publisher", "Platform", FALSE)
 + Most others develop for PS and X360 platforms  
 + Need to add more information on platform owners
 
+### Publisher - Genre
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -543,6 +669,7 @@ getMultivariateGraphical(video_games_data, "Publisher", "Genre", TRUE)
 + Ubisoft, Take-Two Interactive and Sony Computer Entertainment leading in Action games  
 + Nintendo publishes games across the board except Strategy and Adventure
 
+### Genre - Platform
 
 ```{r, warning= FALSE, message= FALSE }
 
@@ -555,6 +682,18 @@ getMultivariateGraphical(video_games_data, "Genre", "Platform", FALSE)
 + Shooter more than Action games on X360 followed by Role-playing and Sports  
 + Action more than Shooter on PS3 followed by Sports
 + Simulation only on 3DS, DS and Wii platforms
+
+### Publisher - Owner
+
+```{r, warning= FALSE, message= FALSE }
+
+getMultivariateGraphical(video_games_data, "Publisher", "Owner", FALSE)
+
+```
+
+### Observations
+
++ Same as earlier cross-tabs
 
 
 7. Multivariate non-graphical -- Quantitative
@@ -597,12 +736,15 @@ pairs_plot %>%
 ### Observations
 
 + NA_Sales and Global_Sales have high positive correlation 0.966  
-+ Correlation between Year and NA_Sales is -0.159 and Year and Global_Sales is -0.139. That means North America gaming slowing down faster than Global.
++ Correlation between Year and NA_Sales is -0.159 and Year and Global_Sales is -0.139. That means North America gaming slowing down faster than Global.  
++ People are probably moving towards mobile gaming like PokemonGo, Candy Crush, PUBG as mobile technology and internet improves
 
 9. Multivariate non-graphical -- Categorical and Quantitative
 =============================================================
 
-matrix tables
+Matrix Tables
+
+### Genre - Platform
 
 ```{r, warning= FALSE, message= FALSE }
 video_games_data %>%
@@ -619,6 +761,7 @@ video_games_data %>%
 + Least revenue on PSP (Platform 2.65) followed by PC (Role-playing 5 and Strategy 2.56)  
 + Adventure, Simulation, Strategy genres have least total revenues
 
+### Genre - Publisher
 
 ```{r, warning= FALSE, message= FALSE }
 video_games_data %>%
@@ -636,11 +779,30 @@ video_games_data %>%
 + Microsoft Game Studios highest revenue is from Shooter games (44.62)  
 + Nintendo's revenue is spread out in almost all genres. Highest in sports genre (75.27)  
 
+### Genre - Owner
+
+```{r, warning= FALSE, message= FALSE }
+video_games_data %>%
+  group_by(Genre, Owner) %>%
+  summarise(total_revenue = sum(NA_Sales)) %>%
+  spread(Owner, total_revenue) %>%
+  kable() %>%
+  kable_styling()
+```
+
+### Observations
+
++ Microsoft has highest revenue from Shooter games  
++ Nintendo has highest revenue from Sports  
++ Sony has highest revenue from Action
+
 
 10. Multivariate graphical -- Categorical and Quantitative
 =============================================================
 
 matrix group by and summarize quant graphs
+
+### Platform - Genre - NA_Sales
 
 ```{r, warning= FALSE, message= FALSE }
 # get total revenue by platform
@@ -657,6 +819,7 @@ video_games_data %>%
 
 ```
 
+### Platform - Genre - NA_Sales (Revenue > $10 Million)
 
 ```{r, warning= FALSE, message= FALSE }
 # get total revenue by platform
@@ -675,7 +838,7 @@ video_games_data %>%
 
 ```
 
-
+### Publisher - Genre - NA_Sales
 
 ```{r, warning= FALSE, message= FALSE }
 # get total revenue by platform
@@ -692,6 +855,7 @@ video_games_data %>%
 
 ```
 
+### Publisher - Genre - NA_Sales (Revenue > $10 Million)
 
 ```{r, warning= FALSE, message= FALSE }
 # get total revenue by platform
@@ -709,6 +873,26 @@ video_games_data %>%
         axis.ticks.y = element_blank())
 
 ```
+
+### Publisher - Owner - NA_Sales (Revenue > $10 Million)
+
+```{r, warning= FALSE, message= FALSE }
+# get total revenue by platform
+video_games_data %>%
+  group_by(Publisher, Owner) %>%
+  summarize (Revenue_sum = sum(NA_Sales)) %>%
+  filter(Revenue_sum >= 10.0) %>%
+  ggplot(aes(x = reorder(Publisher, -Revenue_sum), y = Revenue_sum, fill = Owner)) +
+  geom_bar(stat="identity", position="dodge") +
+  ggtitle("Publishers above 10 Million in Revenue", subtitle = "Microsoft has most publishers above 10 Million") +
+  coord_flip() +
+  theme_classic() + 
+  theme(axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+```
+
 
 
 
